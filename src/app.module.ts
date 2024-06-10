@@ -5,6 +5,9 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { ProductsController } from './products/products.controller';
+// Importa el filtro de excepciones
+
+// import { ParseIntExceptionFilter } from './users/parse-int-exception.filter';
 
 @Module({
   imports: [
@@ -25,6 +28,12 @@ import { ProductsController } from './products/products.controller';
     UsersModule,
   ],
   controllers: [AppController, ProductsController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // {
+    //   // provide: 'APP_FILTER',
+    //   // useClass: ParseIntExceptionFilter,
+    // },
+  ],
 })
 export class AppModule {}

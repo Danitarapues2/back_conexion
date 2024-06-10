@@ -7,11 +7,14 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  ParseIntPipe,
   Post,
   Put,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Users } from './entity/users.entity';
+import { CreateUserDto } from './dto/users.dto';
 
 @Controller('users')
 export class UsersController {
@@ -19,18 +22,23 @@ export class UsersController {
 
   @Post()
   async create(
-    @Body() createUserDto: { name: string; email: string; password: string },
-  ): Promise<string> {
-    const user = await this.usersService.create(
-      createUserDto.name,
-      createUserDto.email,
-      createUserDto.password,
-    );
-
-    return `
-    Nombre: ${user.name}, 
-    Email: ${user.email}, 
-    Contraseña: ${user.password}`;
+    @Body(ValidationPipe) createUserDto: CreateUserDto,
+  ): Promise<any> {
+    try {
+      const user = await this.usersService.create(createUserDto);
+      return {
+        message: 'Usuario creado correctamente',
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+      };
+    } catch (error) {
+      throw new HttpException(
+        'Error al crear el usuario',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get()
@@ -39,20 +47,24 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number): Promise<Users> {
-    return this.usersService.getUsersById(id);
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Users> {
+    const user = await this.usersService.getUsersById(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
   }
 
   @Put(':id')
   async update(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: Partial<Users>,
   ): Promise<Users> {
     return this.usersService.updateById(id, updateUserDto);
   }
 
   @Delete(':id')
-  async deleteUser(@Param('id') id: number): Promise<string> {
+  async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<string> {
     try {
       await this.usersService.deleteUser(id);
       return `User with ID ${id} has been deleted.`;
