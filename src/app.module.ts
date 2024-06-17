@@ -28,12 +28,6 @@ import { ProductsController } from './products/products.controller';
     UsersModule,
   ],
   controllers: [AppController, ProductsController],
-  providers: [
-    AppService,
-    // {
-    //   // provide: 'APP_FILTER',
-    //   // useClass: ParseIntExceptionFilter,
-    // },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

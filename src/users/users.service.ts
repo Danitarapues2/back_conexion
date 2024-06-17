@@ -18,25 +18,38 @@ export class UsersService {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return this.usersRepository.find({ order: { id: 'DESC' } });
+    const list = await this.usersRepository.find();
+    if (list.length == 0) {
+      throw new NotFoundException('La lista esta vacia');
+    }
+    return list;
   }
 
   async getUsersById(id: number): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuario con id: ${id} no encontrado`);
     }
     return user;
   }
 
   async updateById(id: number, updateUserDto: Partial<User>): Promise<User> {
-    const user = await this.getUsersById(id); // Reuse the getUsersById method to check if the user exists
+    const user = await this.getUsersById(id); // Reutilice el método getUsersById para comprobar si el usuario existe
     Object.assign(user, updateUserDto);
     return this.usersRepository.save(user);
   }
 
   async deleteUser(id: number): Promise<void> {
-    const user = await this.getUsersById(id); // Reuse the getUsersById method to check if the user exists
+    const user = await this.getUsersById(id); // Reutilice el método getUsersById para comprobar si el usuario existe
     await this.usersRepository.delete(user);
+  }
+
+  async partialUpdate(
+    id: number,
+    partialUserDto: Partial<CreateUserDto>,
+  ): Promise<User> {
+    const user = await this.getUsersById(id);
+    Object.assign(user, partialUserDto);
+    return this.usersRepository.save(user);
   }
 }

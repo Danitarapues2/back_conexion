@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,6 +9,7 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   ValidationPipe,
@@ -15,6 +17,8 @@ import {
 import { UsersService } from './users.service';
 import { Users } from './entity/users.entity';
 import { CreateUserDto } from './dto/users.dto';
+import { CreateUserPatchDto } from './dto/users.dto.patch';
+import { CreateUserPutDto } from './dto/users.dto.put';
 
 @Controller('users')
 export class UsersController {
@@ -31,6 +35,7 @@ export class UsersController {
         user: {
           name: user.name,
           email: user.email,
+          password: user.password,
         },
       };
     } catch (error) {
@@ -42,38 +47,102 @@ export class UsersController {
   }
 
   @Get()
-  findAll(): Promise<Users[]> {
+  async findAll(): Promise<Users[]> {
     return this.usersService.getAllUsers();
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Users> {
-    const user = await this.usersService.getUsersById(id);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    return user;
+  async findOne(
+    @Param(
+      'id',
+      new ParseIntPipe({
+        errorHttpStatusCode: 400,
+        exceptionFactory: () =>
+          new BadRequestException(
+            'El ID proporcionado no es un número entero válido',
+          ),
+      }),
+    )
+    id: number,
+  ): Promise<Users> {
+    return await this.usersService.getUsersById(id);
   }
 
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: Partial<Users>,
+    @Param(
+      'id',
+      new ParseIntPipe({
+        errorHttpStatusCode: 400,
+        exceptionFactory: () =>
+          new BadRequestException(
+            'El ID proporcionado no es un número entero válido',
+          ),
+      }),
+    )
+    id: number,
+
+    @Body(ValidationPipe) createUserPutDto: CreateUserPutDto,
   ): Promise<Users> {
-    return this.usersService.updateById(id, updateUserDto);
+    try {
+      return this.usersService.updateById(id, createUserPutDto);
+    } catch (error) {
+      throw new HttpException(
+        'Error al actualizar el usuario',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch(':id')
+  async partialUpdate(
+    @Param(
+      'id',
+      new ParseIntPipe({
+        errorHttpStatusCode: HttpStatus.BAD_REQUEST,
+        exceptionFactory: () =>
+          new BadRequestException(
+            'El ID proporcionado no es un número entero válido',
+          ),
+      }),
+    )
+    id: number,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+    createUserPatchDto: CreateUserPatchDto,
+  ): Promise<Users> {
+    try {
+      return await this.usersService.partialUpdate(id, createUserPatchDto);
+    } catch (error) {
+      throw new HttpException(
+        'Error al actualizar parcialmente el usuario',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Delete(':id')
-  async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<string> {
+  async deleteUser(
+    @Param(
+      'id',
+      new ParseIntPipe({
+        errorHttpStatusCode: 400,
+        exceptionFactory: () =>
+          new BadRequestException(
+            'El ID proporcionado no es un númeroooo entero válido',
+          ),
+      }),
+    )
+    id: number,
+  ): Promise<string> {
     try {
       await this.usersService.deleteUser(id);
-      return `User with ID ${id} has been deleted.`;
+      return `Usuario con id: ${id} a sido eliminado`;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new HttpException(error.message, HttpStatus.NOT_FOUND);
       } else {
         throw new HttpException(
-          `Error deleting user with ID ${id}`,
+          `Error en eliminar usuario con el id: ${id}`,
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }

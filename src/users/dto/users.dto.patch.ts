@@ -1,14 +1,14 @@
-import { IsString, IsEmail, Length, IsNotEmpty } from 'class-validator';
+import { IsString, IsEmail, Length, IsOptional } from 'class-validator';
 
-export class CreateUserDto {
-  @IsNotEmpty({ message: 'El nombre es obligatorio' })
+export class CreateUserPatchDto {
   @IsString({ message: 'El nombre debe ser una cadena de texto' })
   @Length(3, 50, {
     message: 'La longitud del nombre debe ser de al menos 3 letras',
   })
+  @IsOptional()
   name: string;
 
-  @IsNotEmpty({ message: 'El correo electrónico es obligatorio' })
+  @IsOptional()
   @IsEmail(
     {},
     {
@@ -17,8 +17,11 @@ export class CreateUserDto {
   )
   email: string;
 
-  @IsNotEmpty({ message: 'La contraseña es obligatoria' })
-  @IsString({ message: 'La contraseña debe ser una cadena de caracteres' })
+  @IsString()
+  @Length(6, 100, {
+    message: 'La longitud de la contraseña debe ser de al menos 6 caracteres',
+  })
+  @IsOptional()
   @Length(6, 100, {
     message: 'La longitud de la contraseña debe ser de al menos 6 caracteres',
   })
